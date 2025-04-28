@@ -1,65 +1,59 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+// import Head from 'next/head'
+import styles from "../styles/log.module.css";
+
+import { useEffect, useState } from "react";
+import { collection, getDocs, query } from "firebase/firestore";
+import { db } from "./firebase";
+import Link from "next/link";
 
 export default function Home() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const snapshot = await getDocs(collection(db, "main"));
+      setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    };
+    setLoading(false);
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className={styles.spinnerContainer}>
+        <div className={styles.spinner}></div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
+    <div className={`${styles.container} ${styles.fadeIn}`}>
+      <h1 className={styles.pageTitle}>뉴질랜드</h1>
+      <div className={styles.grid}>
+        {data.map((log) => (
+          <Link
+            key={log.id}
+            href={{
+              pathname: "/log",
+              query: { title: log.title, date: log.date },
+            }}
+            // as="/log"
             className={styles.card}
           >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+            <img
+              loading="lazy"
+              src={log.photoUrl}
+              alt={log.title}
+              className={styles.thumbnail}
+            />
+            <div className={styles.textOverlay}>
+              <h2>{log.title}</h2>
+              <p>{log.date}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
-  )
+  );
 }
