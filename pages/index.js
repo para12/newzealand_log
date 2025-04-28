@@ -2,8 +2,8 @@
 import styles from "../styles/log.module.css";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query } from "firebase/firestore";
-import { db } from "./firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import Link from "next/link";
 
 export default function Home() {
