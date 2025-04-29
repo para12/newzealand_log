@@ -6,7 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import Link from "next/link";
 import Image from "next/image";
-import { getBase64FromCloudinary, getImageSize } from "./util";
+import { getBase64FromCloudinary, getImageSize } from "../lib/util";
 
 function isImageUrl(str) {
   return str.startsWith("https://res.cloudinary.com/dnkvykbeq/image/upload/");

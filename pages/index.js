@@ -4,7 +4,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import Link from "next/link";
 import Image from "next/image";
-import { getBase64FromCloudinary, getImageSize } from "./util";
+import { getBase64FromCloudinary, getImageSize } from "../lib/util";
 
 export default function Home() {
   const [data, setData] = useState([]);
