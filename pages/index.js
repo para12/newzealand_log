@@ -1,21 +1,48 @@
-// import Head from 'next/head'
 import styles from "../styles/log.module.css";
-
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import Link from "next/link";
+import Image from "next/image";
+import { getBase64FromCloudinary, getImageSize } from "./util";
 
 export default function Home() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const snapshot = await getDocs(collection(db, "main"));
-      setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    };
-    setLoading(false);
+    async function fetchData() {
+      try {
+        const snapshot = await getDocs(collection(db, "main"));
+
+        const processed = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const raw = doc.data(); // rawMain -> raw로 이름 바꿈
+            const [blurDataURL, size] = await Promise.all([
+              getBase64FromCloudinary(raw.photoUrl),
+              getImageSize(raw.photoUrl),
+            ]);
+
+            return {
+              id: raw.date,
+              title: raw.title,
+              date: raw.date,
+              photoUrl: raw.photoUrl,
+              blurDataURL,
+              width: size.width,
+              height: size.height,
+            };
+          })
+        );
+
+        setData(processed);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchData();
   }, []);
 
@@ -38,14 +65,17 @@ export default function Home() {
               pathname: "/log",
               query: { title: log.title, date: log.date },
             }}
-            // as="/log"
             className={styles.card}
           >
-            <img
-              loading="lazy"
+            <Image
               src={log.photoUrl}
-              alt={log.title}
+              alt="사진 설명"
+              width={300}
+              height={200}
+              placeholder="blur"
+              blurDataURL={log.blurDataURL}
               className={styles.thumbnail}
+              style={{ objectFit: "cover" }}
             />
             <div className={styles.textOverlay}>
               <h2>{log.title}</h2>
