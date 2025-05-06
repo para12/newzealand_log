@@ -1,7 +1,7 @@
 import styles from "../styles/log.module.css";
 
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import Link from "next/link";
@@ -17,6 +17,9 @@ export default function Log() {
   const { title, date } = router.query;
   const [log, setLog] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [fadeState, setFadeState] = useState(null); // 추가
+  const imageRefs = useRef([]);
 
   useEffect(() => {
     if (!date) return;
@@ -84,22 +87,85 @@ export default function Log() {
         {log.map((c, idx) =>
           c.type === "image" ? (
             <Image
-              key={idx}
+              ref={(el) => (imageRefs.current[idx] = el)}
               src={c.src}
               alt="사진 설명"
               width={c.width}
               height={c.height}
               placeholder="blur"
               blurDataURL={c.blurDataURL}
-              className={styles.logImage}
-              style={{ objectFit: "contain" }}
+              className={styles.thumbnail}
+              style={{ objectFit: "cover", cursor: "pointer" }}
               layout="responsive"
+              onClick={(e) => {
+                e.stopPropagation(); // 부모 클릭 막기
+                const imgEl = imageRefs.current[idx];
+                if (imgEl) {
+                  setSelectedImage({
+                    src: c.src,
+                    blurDataURL: c.blurDataURL,
+                    width: imgEl.clientWidth,
+                    height: imgEl.clientHeight,
+                  });
+                  setFadeState("fadeIn"); // 열 때 fadeIn
+                }
+              }}
             />
           ) : (
             <p key={idx} className={styles.logText}>
               {c.text}
             </p>
           )
+        )}
+        {/* {selectedImage && (
+          <div
+            className={styles.overlay}
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className={styles.imageWrapper}>
+              <Image
+                src={selectedImage.src}
+                alt="확대된 사진"
+                width={selectedImage.width}
+                height={selectedImage.height}
+                className={styles.expandedImage}
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+          </div>
+        )} */}
+        {selectedImage && (
+          <div
+            className={`${styles.overlay} ${
+              fadeState === "fadeOut" ? styles.fadeOut : styles.fadeIn
+            }`}
+            onClick={() => {
+              setFadeState("fadeOut");
+              setTimeout(() => {
+                setSelectedImage(null);
+                setFadeState(null);
+              }, 300); // fadeOut 끝나고 300ms 후에 닫기
+            }}
+          >
+            <div
+              className={styles.imageWrapper}
+              style={{
+                width: selectedImage.width,
+                height: selectedImage.height,
+              }}
+            >
+              <img
+                src={selectedImage.src}
+                alt="확대된 사진"
+                className={styles.expandedImage}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
